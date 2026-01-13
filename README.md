@@ -64,10 +64,17 @@ return horas * ValorHora;
 
 ---
 
-## ✍️ Autor
+---
 
+🛠️ **Software desenvolvido por Daniel Barbieri**  
+Engenheiro de Software | Full Stack Developer  
 
-📧 dibarbieri21@gmail.com
+Código construído com foco em eficiência, organização, escalabilidade e boas práticas de desenvolvimento.
+
+🌐 GitHub: https://github.com/DanielBarbieri21  
+💼 LinkedIn: https://www.linkedin.com/in/daniel-barbieri-4990462a/
+
+---
 
 ---
 
