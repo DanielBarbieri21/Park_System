@@ -1,16 +1,21 @@
 using Estacionamento.Models;
+using Estacionamento.Abstractions;
 using Estacionamento.Services;
 using System;
 using System.Linq;
 using System.Windows.Forms;
 using System.Drawing;
 using System.Windows.Forms.DataVisualization.Charting;
+using System.Text.RegularExpressions;
 
 namespace Estacionamento
 {
     public partial class Form1 : Form
     {
-        private readonly EstacionamentoService _estacionamentoService = new EstacionamentoService();
+        private readonly EstacionamentoService _estacionamentoService;
+        private readonly RelatorioService _relatorioService;
+        private readonly ILogService _log;
+        private System.Windows.Forms.Timer? _refreshTimer;
 
         // Controles da interface moderna
         private Panel panelDashboard = null!;
@@ -30,8 +35,12 @@ namespace Estacionamento
         private Chart chartTiposVeiculos = null!;
         private ToolTip toolTip = null!;
 
-        public Form1()
+        public Form1(EstacionamentoService estacionamentoService, RelatorioService relatorioService, ILogService log)
         {
+            _estacionamentoService = estacionamentoService;
+            _relatorioService = relatorioService;
+            _log = log;
+
             InitializeComponent();
 
             // Configurações do formulário
@@ -171,11 +180,11 @@ namespace Estacionamento
 
         private void ConfigurarEventos()
         {
-            // Timer para atualizar valores em tempo real
-            var timer = new System.Windows.Forms.Timer();
-            timer.Interval = 1000; // Atualizar a cada segundo
-            timer.Tick += Timer_Tick;
-            timer.Start();
+            // Timer para atualizar valores sem sobrecarregar a UI
+            _refreshTimer = new System.Windows.Forms.Timer();
+            _refreshTimer.Interval = 5000;
+            _refreshTimer.Tick += Timer_Tick;
+            _refreshTimer.Start();
 
             // Evento para mostrar valor estimado quando digitar valor por hora
             txtValorHora.TextChanged += TxtValorHora_TextChanged;
@@ -183,10 +192,9 @@ namespace Estacionamento
 
         private void Timer_Tick(object? sender, EventArgs e)
         {
-            // Atualizar grid com tempos em tempo real
+            // Atualizacoes periodicas de leitura
             AtualizarGrid();
             AtualizarDashboard();
-            AtualizarGraficos();
         }
 
         private void TxtValorHora_TextChanged(object? sender, EventArgs e)
@@ -200,7 +208,7 @@ namespace Estacionamento
                 
                 if (veiculo != null)
                 {
-                    var tempoDecorrido = DateTime.Now - veiculo.Entrada;
+                    var tempoDecorrido = DateTime.UtcNow - veiculo.Entrada;
                     var valorEstimado = CalcularValorEstimado(tempoDecorrido, valorHora);
                     toolTip.SetToolTip(txtValorHora, $"Valor estimado: R$ {valorEstimado:F2}");
                 }
@@ -553,67 +561,33 @@ namespace Estacionamento
 
                 using (var sfd = new SaveFileDialog())
                 {
-                    sfd.Filter = "PDF Files|*.pdf";
-                    sfd.Title = "Salvar Relatório PDF";
+                    sfd.Filter = "Arquivos PDF|*.pdf|Arquivos CSV|*.csv";
+                    sfd.Title = "Salvar Relatorio";
                     sfd.FileName = "Relatorio_Estacionamento.pdf";
                     if (sfd.ShowDialog() == DialogResult.OK)
                     {
-                        GerarRelatorioPDF(veiculos, sfd.FileName);
-                        MessageBox.Show("Relatório gerado com sucesso!");
+                        var extension = System.IO.Path.GetExtension(sfd.FileName).ToLowerInvariant();
+                        if (extension == ".csv")
+                        {
+                            _relatorioService.GerarCsv(veiculos, sfd.FileName);
+                        }
+                        else
+                        {
+                            _relatorioService.GerarPdf(veiculos, sfd.FileName);
+                        }
+
+                        _log.Info($"Relatorio exportado: {sfd.FileName}");
+                        MessageBox.Show("Relatorio gerado com sucesso!");
                     }
                 }
             }
             catch (Exception ex)
             {
+                _log.Error("Erro ao gerar relatorio.", ex);
                 MessageBox.Show($"Erro ao gerar relatório: {ex.Message}");
             }
 
         }
-
-        private void GerarRelatorioPDF(System.Collections.Generic.List<Estacionamento.Models.Veiculo> veiculos, string filePath)
-        {
-            using (var fs = new System.IO.FileStream(filePath, System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.None))
-            {
-                var doc = new iTextSharp.text.Document(iTextSharp.text.PageSize.A4);
-                var writer = iTextSharp.text.pdf.PdfWriter.GetInstance(doc, fs);
-                doc.Open();
-
-                var titulo = new iTextSharp.text.Paragraph("Relatório de Estacionamento", new iTextSharp.text.Font(iTextSharp.text.Font.HELVETICA, 18, iTextSharp.text.Font.BOLD));
-                titulo.Alignment = iTextSharp.text.Element.ALIGN_CENTER;
-                doc.Add(titulo);
-                doc.Add(new iTextSharp.text.Paragraph($"Data: {DateTime.Now:dd/MM/yyyy HH:mm}", new iTextSharp.text.Font(iTextSharp.text.Font.HELVETICA, 12)));
-                doc.Add(new iTextSharp.text.Paragraph("\n"));
-
-                var tabela =    new iTextSharp.text.pdf.PdfPTable(6);
-                tabela.WidthPercentage = 100;
-                tabela.AddCell("Placa");
-                tabela.AddCell("Tipo");
-                tabela.AddCell("Entrada");
-                tabela.AddCell("Saída");
-                tabela.AddCell("Valor/Hora");
-                tabela.AddCell("Valor Total");
-
-                decimal faturamento = 0;
-                foreach (var v in veiculos)
-                {
-                    tabela.AddCell(v.Placa);
-                    tabela.AddCell(v.Tipo.ToString());
-                    tabela.AddCell(v.Entrada.ToString("dd/MM/yyyy HH:mm"));
-                    tabela.AddCell(v.Saida?.ToString("dd/MM/yyyy HH:mm") ?? "-");
-                    tabela.AddCell($"R$ {v.ValorHora:F2}");
-                    var valor = v.Saida != null ? v.CalcularValor() : 0;
-                    tabela.AddCell($"R$ {valor:F2}");
-                    faturamento += valor;
-                }
-                doc.Add(tabela);
-
-                doc.Add(new iTextSharp.text.Paragraph("\n"));
-                doc.Add(new iTextSharp.text.Paragraph($"Faturamento total: R$ {faturamento:F2}", new iTextSharp.text.Font(iTextSharp.text.Font.HELVETICA, 14, iTextSharp.text.Font.BOLD)));
-
-                doc.Close();
-                writer.Close();
-            }
-    }
 
         private void btnRegistrarEntrada_Click(object sender, EventArgs e)
         {
@@ -679,16 +653,8 @@ namespace Estacionamento
 
         private bool ValidarPlaca(string placa)
         {
-            // Validar formato de placa brasileira (ABC1234 ou ABC1D23)
-            var placaLimpa = placa.Replace("-", "").Replace(" ", "").ToUpper();
-            return placaLimpa.Length == 7 && 
-                   char.IsLetter(placaLimpa[0]) && 
-                   char.IsLetter(placaLimpa[1]) && 
-                   char.IsLetter(placaLimpa[2]) &&
-                   char.IsDigit(placaLimpa[3]) && 
-                   char.IsDigit(placaLimpa[4]) && 
-                   char.IsDigit(placaLimpa[5]) && 
-                   char.IsDigit(placaLimpa[6]);
+            var placaLimpa = placa.Replace("-", "").Replace(" ", "").ToUpperInvariant();
+            return Regex.IsMatch(placaLimpa, "^[A-Z]{3}[0-9]{4}$|^[A-Z]{3}[0-9][A-Z][0-9]{2}$");
         }
 
         private void BtnRegistrarSaida_Click(object sender, EventArgs e)
@@ -702,15 +668,15 @@ namespace Estacionamento
                     return;
                 }
 
-                var veiculo = _estacionamentoService.RegistrarSaida(txtPlaca.Text);
-                decimal valor = veiculo.CalcularValor();
+                var preview = _estacionamentoService.SimularSaida(txtPlaca.Text);
+                decimal valor = preview.CalcularValor();
 
                 // Modal de confirmação com detalhes
-                var horasTotais = veiculo.TempoPermanencia.TotalHours;
+                var horasTotais = preview.TempoPermanencia.TotalHours;
                 var resultado = MessageBox.Show(
                     $"Confirma a saída do veículo?\n\n" +
-                    $"Placa: {veiculo.Placa}\n" +
-                    $"Tipo: {veiculo.Tipo}\n" +
+                    $"Placa: {preview.Placa}\n" +
+                    $"Tipo: {preview.Tipo}\n" +
                     $"Tempo: {horasTotais:F2} horas\n" +
                     $"Valor a pagar: R$ {valor:F2}",
                     "Confirmar Saída",
@@ -719,6 +685,8 @@ namespace Estacionamento
 
                 if (resultado == DialogResult.Yes)
                 {
+                    _estacionamentoService.ConfirmarSaida(preview.Id, preview.Saida!.Value);
+
                     // Limpar campos após saída
                     txtPlaca.Clear();
                     txtValorHora.Clear();
@@ -733,6 +701,7 @@ namespace Estacionamento
             }
             catch (Exception ex)
             {
+                _log.Error("Erro ao registrar saida.", ex);
                 MessageBox.Show(ex.Message, "Erro ao registrar saída", 
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
@@ -827,12 +796,12 @@ namespace Estacionamento
                 v.Placa,
                 v.Tipo,
                 Status = v.Saida != null ? "FINALIZADO" : "ATIVO",
-                Entrada = v.Entrada.ToString("HH:mm:ss"),
-                Saída = v.Saida?.ToString("HH:mm:ss") ?? "-",
-                Tempo = v.Saida != null ? v.TempoPermanencia.ToString(@"hh\:mm") : (DateTime.Now - v.Entrada).ToString(@"hh\:mm"),
+                Entrada = v.Entrada.ToLocalTime().ToString("HH:mm:ss"),
+                Saída = v.Saida?.ToLocalTime().ToString("HH:mm:ss") ?? "-",
+                Tempo = v.Saida != null ? v.TempoPermanencia.ToString(@"hh\:mm") : (DateTime.UtcNow - v.Entrada).ToString(@"hh\:mm"),
                 Valor = v.Saida != null ? $"R$ {v.CalcularValor():F2}" : 
                         TryParseValorHora(txtValorHora.Text, out decimal valorHora) ?
-                        $"R$ {CalcularValorEstimado(DateTime.Now - v.Entrada, valorHora):F2}" : "R$ 0,00",
+                        $"R$ {CalcularValorEstimado(DateTime.UtcNow - v.Entrada, valorHora):F2}" : "R$ 0,00",
                 Finalizado = v.Saida != null
             }).ToList();
             dgvVeiculos.AutoGenerateColumns = true;
@@ -1031,7 +1000,6 @@ namespace Estacionamento
         private void AtualizarDashboard()
         {
             var veiculosAtivos = _estacionamentoService.ListarVeiculosAtivos();
-            var todosVeiculos = _estacionamentoService.ListarTodosVeiculos();
             
             int totalAtivos = veiculosAtivos.Count;
             int carros = veiculosAtivos.Count(v => v.Tipo == TipoVeiculo.Carro);
@@ -1052,7 +1020,7 @@ namespace Estacionamento
 
             // Atualizar gráfico de faturamento
             var dadosFaturamento = veiculos.Where(v => v.Saida != null)
-                .GroupBy(v => v.Saida.Value.Date)
+                .GroupBy(v => v.Saida!.Value.ToLocalTime().Date)
                 .Select(g => new { Data = g.Key, Valor = g.Sum(v => v.CalcularValor()) })
                 .OrderBy(g => g.Data)
                 .ToList();
@@ -1099,6 +1067,18 @@ namespace Estacionamento
             {
                 MessageBox.Show(ex.Message, "Erro ao excluir finalizado", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        protected override void OnFormClosed(FormClosedEventArgs e)
+        {
+            if (_refreshTimer != null)
+            {
+                _refreshTimer.Stop();
+                _refreshTimer.Dispose();
+                _refreshTimer = null;
+            }
+
+            base.OnFormClosed(e);
         }
     }
 }

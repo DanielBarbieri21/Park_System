@@ -1,4 +1,5 @@
-using Estacionamento.Repositories;
+using Estacionamento.Abstractions;
+using Estacionamento.Services;
 using System;
 using System.Windows.Forms;
 
@@ -6,50 +7,35 @@ namespace Estacionamento
 {
     public partial class LoginForm : Form
     {
-        private readonly UsuarioRepositorySQLite _usuarioRepo = new UsuarioRepositorySQLite();
+        private readonly AuthenticationService _authenticationService;
+        private readonly Func<Form1> _mainFormFactory;
+        private readonly ILogService _log;
 
-        public LoginForm()
+        public LoginForm(AuthenticationService authenticationService, Func<Form1> mainFormFactory, ILogService log)
         {
+            _authenticationService = authenticationService;
+            _mainFormFactory = mainFormFactory;
+            _log = log;
+
             InitializeComponent();
-            AdicionarUsuarioAdminPadrao();
-        }
-
-        private void AdicionarUsuarioAdminPadrao()
-        {
-            // Verifica se já existe admin
-            var repo = new UsuarioRepositorySQLite();
-            var usuario = repo.Autenticar("admin", "246895");
-            if (usuario == null)
-            {
-                repo.Adicionar(new Models.Usuario
-                {
-                    Nome = "Administrador",
-                    Email = "admin",
-                    Login = "admin",
-                    Senha = "246895",
-                    Tipo = Models.TipoUsuario.Admin
-                });
-            }
-    // ...existing code...
         }
 
         private void btnEntrar_Click(object sender, EventArgs e)
         {
-            var email = txtEmail.Text.Trim();
+            var identificador = txtEmail.Text.Trim();
             var senha = txtSenha.Text;
-            var usuario = _usuarioRepo.Autenticar(email, senha);
+            var usuario = _authenticationService.Autenticar(identificador, senha);
             if (usuario != null)
             {
-                // Usuário autenticado, abrir tela principal
-                this.Hide();
-                var formPrincipal = new Form1();
+                Hide();
+                _log.Info($"Login realizado: {usuario.Login} ({usuario.Tipo})");
+                using var formPrincipal = _mainFormFactory();
                 formPrincipal.ShowDialog();
-                this.Close();
+                Close();
+                return;
             }
-            else
-            {
-                MessageBox.Show("E-mail ou senha inválidos.", "Login", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+
+            MessageBox.Show("Usuario ou senha invalidos.", "Login", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }
 }

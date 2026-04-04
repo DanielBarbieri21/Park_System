@@ -5,6 +5,8 @@ VisualStudioVersion = 17.14.36202.13 d17.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Estacionamento", "Estacionamento\Estacionamento.csproj", "{52628DC0-0077-4BA0-9CD4-D2C789B23684}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Estacionamento.Tests", "Estacionamento.Tests\Estacionamento.Tests.csproj", "{81825A6D-C68D-4B17-8445-B9EC79F0BB18}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{52628DC0-0077-4BA0-9CD4-D2C789B23684}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{52628DC0-0077-4BA0-9CD4-D2C789B23684}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{52628DC0-0077-4BA0-9CD4-D2C789B23684}.Release|Any CPU.Build.0 = Release|Any CPU
+		{81825A6D-C68D-4B17-8445-B9EC79F0BB18}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{81825A6D-C68D-4B17-8445-B9EC79F0BB18}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{81825A6D-C68D-4B17-8445-B9EC79F0BB18}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{81825A6D-C68D-4B17-8445-B9EC79F0BB18}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

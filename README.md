@@ -1,83 +1,77 @@
+﻿# Sistema de Estacionamento (WinForms + .NET 8)
 
-# 🚗 Sistema de Estacionamento - WinForms (C#)
+Aplicacao desktop para controle de entrada e saida de veiculos, com dashboard operacional, autenticacao, relatorios e persistencia em SQLite.
 
-Este projeto é um sistema simples de gerenciamento de estacionamento, desenvolvido com **Windows Forms em C#**, que permite registrar a entrada e saída de veículos, calcular o tempo de permanência e o valor a pagar com base no valor da hora definido pelo usuário.
+## Upgrade aplicado
 
----
+### 1) Seguranca
+- Senhas migradas para hash PBKDF2 com salt (`SenhaHash` e `SenhaSalt`).
+- Suporte a migracao automatica de usuarios legados com senha em texto plano no primeiro login.
+- Seed de admin padrao controlado por `AuthenticationService`.
 
-## 📸 Interface
+### 2) Arquitetura
+- Introduzidas abstracoes (`IClock`, `ILogService`).
+- Repositorios com interfaces (`IVeiculoRepository`, `IUsuarioRepository`).
+- Composicao centralizada no `Program.cs` (injeção manual de dependencias).
+- Servico de autenticacao separado (`AuthenticationService`).
+- Servico de relatorios separado (`RelatorioService`).
 
+### 3) Banco de dados e migracoes
+- Migracao automatica de schema em inicializacao.
+- Novas colunas de auditoria em `Veiculos`: `CreatedAtUtc`, `UpdatedAtUtc`.
+- Indice unico parcial para impedir mais de um registro ativo por placa.
+- Indices para consultas por placa, entrada e saida.
+- Persistencia de datas em UTC (ISO 8601).
 
----
+### 4) Qualidade
+- Projeto de testes unitarios criado em `Estacionamento.Tests`.
+- Cobertura inicial de cenarios criticos de entrada e saida.
+- `.editorconfig` adicionado para padronizacao.
 
-## ⚙️ Funcionalidades
+### 5) Upgrade funcional
+- Correcao do fluxo de saida: agora confirma antes de persistir.
+- Validacao de placa atualizada para formatos:
+  - `ABC1234`
+  - `ABC1D23` (Mercosul)
+- Relatorios com exportacao em PDF e CSV.
+- Logging de eventos e falhas em arquivo (`logs/app-YYYYMMDD.log`).
 
-- Registrar entrada de veículos com placa, tipo e valor por hora.
-- Registrar saída de veículos com cálculo automático do tempo e valor a pagar.
-- Listagem dos veículos com entrada, saída, tempo de permanência e valor cobrado.
-- Interface simples e intuitiva com DataGridView.
-- Tipos de veículos disponíveis: **Carro**, **Moto**, **Caminhão**.
+### 6) Operacao e entrega
+- Pipeline GitHub Actions (`.github/workflows/ci.yml`) com restore, build e test.
 
----
+## Estrutura principal
 
-## 🧾 Tecnologias utilizadas
+- `Estacionamento/Program.cs`: composicao da aplicacao.
+- `Estacionamento/Form1.cs`: UI principal.
+- `Estacionamento/LoginForm.cs`: tela de autenticacao.
+- `Estacionamento/Services/EstacionamentoService.cs`: regras de negocio.
+- `Estacionamento/Services/AuthenticationService.cs`: autenticacao e migracao de credenciais.
+- `Estacionamento/Services/RelatorioService.cs`: exportacao PDF/CSV.
+- `Estacionamento/Repositories/`: acesso a SQLite e contratos.
+- `Estacionamento/Security/PasswordHasher.cs`: hash e verificacao de senha.
+- `Estacionamento/Infrastructure/FileLogService.cs`: log local.
+- `Estacionamento.Tests/`: testes unitarios.
 
-- 🖥️ **.NET Framework (Windows Forms)**
-- 💻 **C#**
-- 📋 **WinForms Designer** para UI
+## Como executar
 
----
+1. Restaurar pacotes:
+   - `dotnet restore Estacionamento.sln`
+2. Compilar:
+   - `dotnet build Estacionamento.sln`
+3. Executar app (via Visual Studio ou `dotnet run` no projeto WinForms).
 
-## 🚀 Como executar
+## Credencial inicial
 
-1. Abra o projeto no **Visual Studio**.
-2. Compile e execute com `F5` ou clique em **Start**.
-3. Preencha:
-   - **Placa**
-   - **Tipo**
-   - **Valor Hora**
-4. Clique em **Registrar Entrada**.
-5. Para registrar a saída, informe a placa novamente e clique em **Registrar Saída**.
+- Usuario: `admin`
+- Senha inicial: `246895`
 
----
+Recomendacao: trocar senha inicial no primeiro acesso com uma funcionalidade de administracao de usuarios.
 
-## 🧠 Lógica de cálculo
+## Requisitos
 
-O sistema calcula o valor total da permanência com base no **valor por hora informado na entrada**.
+- .NET SDK 8.0
+- Windows (WinForms)
 
-```csharp
-var horas = Math.Ceiling(TempoPermanencia.TotalHours);
-return horas * ValorHora;
-```
+## Observacao de ambiente
 
----
-
-## 📂 Estrutura de arquivos
-
-```
-├── Form1.cs               // Lógica principal da interface
-├── Form1.Designer.cs      // Componentes e layout do formulário
-├── Veiculo.cs             // Classe que representa o veículo
-├── Program.cs             // Classe inicial do aplicativo
-└── README.md              // Este arquivo
-```
-
----
-
----
-
-🛠️ **Software desenvolvido por Daniel Barbieri**  
-Engenheiro de Software | Full Stack Developer  
-
-Código construído com foco em eficiência, organização, escalabilidade e boas práticas de desenvolvimento.
-
-🌐 GitHub: https://github.com/DanielBarbieri21  
-💼 LinkedIn: https://www.linkedin.com/in/daniel-barbieri-4990462a/
-
----
-
----
-
-## 📄 Licença
-
-Este projeto é open-source e você pode utilizá-lo livremente para fins de estudo ou melhorias.
+Se o restore falhar com `NU1101`, configure o NuGet para incluir a fonte oficial `https://api.nuget.org/v3/index.json`.
