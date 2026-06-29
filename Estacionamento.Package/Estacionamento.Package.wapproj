@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build">
+  <PropertyGroup Condition="'$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '15.0'">
+    <VisualStudioVersion>15.0</VisualStudioVersion>
+  </PropertyGroup>
+
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x86">
+      <Configuration>Debug</Configuration>
+      <Platform>x86</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x86">
+      <Configuration>Release</Configuration>
+      <Platform>x86</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|arm64">
+      <Configuration>Debug</Configuration>
+      <Platform>arm64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|arm64">
+      <Configuration>Release</Configuration>
+      <Platform>arm64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+
+  <PropertyGroup>
+    <WapProjPath Condition="'$(WapProjPath)'==''">$(MSBuildExtensionsPath)\Microsoft\DesktopBridge\</WapProjPath>
+    <DesktopBridgeProps>$(WapProjPath)\Microsoft.DesktopBridge.props</DesktopBridgeProps>
+    <DesktopBridgeTargets>$(WapProjPath)\Microsoft.DesktopBridge.targets</DesktopBridgeTargets>
+    <ProjectGuid>{A8F3C2E1-4B5D-4E6F-9A0B-1C2D3E4F5A6B}</ProjectGuid>
+    <ProjectName>Estacionamento.Package</ProjectName>
+    <TargetPlatformVersion>10.0.19041.0</TargetPlatformVersion>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <DefaultLanguage>pt-BR</DefaultLanguage>
+    <AppxPackageSigningEnabled>false</AppxPackageSigningEnabled>
+    <EntryPointProjectUniqueName>..\Estacionamento\Estacionamento.csproj</EntryPointProjectUniqueName>
+    <GenerateAppInstallerFile>False</GenerateAppInstallerFile>
+    <AppxAutoIncrementPackageRevision>True</AppxAutoIncrementPackageRevision>
+    <GenerateTestArtifacts>True</GenerateTestArtifacts>
+    <AppxBundlePlatforms>x64|x86|arm64</AppxBundlePlatforms>
+    <AppxBundle>Always</AppxBundle>
+    <HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
+  </PropertyGroup>
+
+  <Import Project="$(DesktopBridgeProps)" Condition="Exists('$(DesktopBridgeProps)')" />
+
+  <Target Name="Build" Condition="!Exists('$(DesktopBridgeProps)') Or !Exists('$(DesktopBridgeTargets)')">
+    <Message Importance="High" Text="Projeto MSIX ignorado: instale no Visual Studio o componente 'Ferramentas de empacotamento MSIX' para gerar o pacote Store." />
+  </Target>
+
+  <Target Name="Rebuild" DependsOnTargets="Build" Condition="!Exists('$(DesktopBridgeProps)') Or !Exists('$(DesktopBridgeTargets)')" />
+  <Target Name="Clean" Condition="!Exists('$(DesktopBridgeProps)') Or !Exists('$(DesktopBridgeTargets)')" />
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <DebugType>pdbonly</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AppxManifest Include="Package.appxmanifest">
+      <SubType>Designer</SubType>
+    </AppxManifest>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Images\StoreLogo.png" />
+    <Content Include="Images\Square44x44Logo.png" />
+    <Content Include="Images\Square150x150Logo.png" />
+    <Content Include="Images\Wide310x150Logo.png" />
+    <Content Include="Images\SplashScreen.png" />
+    <Content Include="Images\Logo300.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Estacionamento\Estacionamento.csproj">
+      <SkipGetTargetFrameworkProperties>True</SkipGetTargetFrameworkProperties>
+    </ProjectReference>
+  </ItemGroup>
+
+  <Import Project="$(DesktopBridgeTargets)" Condition="Exists('$(DesktopBridgeTargets)')" />
+</Project>

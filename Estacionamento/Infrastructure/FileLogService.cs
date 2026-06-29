@@ -11,8 +11,9 @@ namespace Estacionamento.Infrastructure
 
         public FileLogService(string? baseDirectory = null)
         {
-            var root = baseDirectory ?? AppContext.BaseDirectory;
-            var logsDir = Path.Combine(root, "logs");
+            var logsDir = baseDirectory == null
+                ? AppPaths.LogsDirectory
+                : Path.Combine(baseDirectory, "logs");
             Directory.CreateDirectory(logsDir);
             _logPath = Path.Combine(logsDir, $"app-{DateTime.UtcNow:yyyyMMdd}.log");
         }

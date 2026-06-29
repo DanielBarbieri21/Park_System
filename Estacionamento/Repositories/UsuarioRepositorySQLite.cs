@@ -1,12 +1,14 @@
-﻿using Estacionamento.Models;
+using Estacionamento.Models;
+using Estacionamento.Infrastructure;
 using Microsoft.Data.Sqlite;
 using System;
+using System.Collections.Generic;
 
 namespace Estacionamento.Repositories
 {
     public class UsuarioRepositorySQLite : IUsuarioRepository
     {
-        private const string ConnectionString = "Data Source=estacionamento.db";
+        private static string ConnectionString => $"Data Source={AppPaths.GetDataFilePath("estacionamento.db")}";
 
         public UsuarioRepositorySQLite()
         {
@@ -100,6 +102,40 @@ namespace Estacionamento.Repositories
             cmd.ExecuteNonQuery();
         }
 
+        public IReadOnlyList<Usuario> Listar()
+        {
+            var usuarios = new List<Usuario>();
+            using var conn = new SqliteConnection(ConnectionString);
+            conn.Open();
+            var cmd = conn.CreateCommand();
+            cmd.CommandText = @"
+                SELECT Id, Nome, Email, Login, Senha, SenhaHash, SenhaSalt, Tipo
+                FROM Usuarios
+                ORDER BY Nome COLLATE NOCASE, Login COLLATE NOCASE";
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                usuarios.Add(LerUsuario(reader));
+            }
+
+            return usuarios;
+        }
+
+        public Usuario? ObterPorId(int id)
+        {
+            using var conn = new SqliteConnection(ConnectionString);
+            conn.Open();
+            var cmd = conn.CreateCommand();
+            cmd.CommandText = @"
+                SELECT Id, Nome, Email, Login, Senha, SenhaHash, SenhaSalt, Tipo
+                FROM Usuarios
+                WHERE Id = $id
+                LIMIT 1";
+            cmd.Parameters.AddWithValue("$id", id);
+            using var reader = cmd.ExecuteReader();
+            return reader.Read() ? LerUsuario(reader) : null;
+        }
+
         public Usuario? ObterPorEmail(string email)
         {
             return ObterPorCampo("Email", email);
@@ -110,15 +146,24 @@ namespace Estacionamento.Repositories
             return ObterPorCampo("Login", login);
         }
 
-        public bool ExisteAdmin()
+        public void Atualizar(Usuario usuario)
         {
             using var conn = new SqliteConnection(ConnectionString);
             conn.Open();
             var cmd = conn.CreateCommand();
-            cmd.CommandText = "SELECT COUNT(1) FROM Usuarios WHERE Tipo = $tipo";
-            cmd.Parameters.AddWithValue("$tipo", (int)TipoUsuario.Admin);
-            var count = Convert.ToInt32(cmd.ExecuteScalar());
-            return count > 0;
+            cmd.CommandText = @"
+                UPDATE Usuarios
+                SET Nome = $nome,
+                    Email = $email,
+                    Login = $login,
+                    Tipo = $tipo
+                WHERE Id = $id";
+            cmd.Parameters.AddWithValue("$id", usuario.Id);
+            cmd.Parameters.AddWithValue("$nome", usuario.Nome);
+            cmd.Parameters.AddWithValue("$email", usuario.Email);
+            cmd.Parameters.AddWithValue("$login", usuario.Login);
+            cmd.Parameters.AddWithValue("$tipo", (int)usuario.Tipo);
+            cmd.ExecuteNonQuery();
         }
 
         public void AtualizarCredenciais(int id, string senhaHash, string senhaSalt)
@@ -138,6 +183,31 @@ namespace Estacionamento.Repositories
             cmd.ExecuteNonQuery();
         }
 
+        public void Excluir(int id)
+        {
+            using var conn = new SqliteConnection(ConnectionString);
+            conn.Open();
+            var cmd = conn.CreateCommand();
+            cmd.CommandText = "DELETE FROM Usuarios WHERE Id = $id";
+            cmd.Parameters.AddWithValue("$id", id);
+            cmd.ExecuteNonQuery();
+        }
+
+        public bool ExisteAdmin()
+        {
+            return ContarAdmins() > 0;
+        }
+
+        public int ContarAdmins()
+        {
+            using var conn = new SqliteConnection(ConnectionString);
+            conn.Open();
+            var cmd = conn.CreateCommand();
+            cmd.CommandText = "SELECT COUNT(1) FROM Usuarios WHERE Tipo = $tipo";
+            cmd.Parameters.AddWithValue("$tipo", (int)TipoUsuario.Admin);
+            return Convert.ToInt32(cmd.ExecuteScalar());
+        }
+
         private Usuario? ObterPorCampo(string campo, string valor)
         {
             if (string.IsNullOrWhiteSpace(valor))
@@ -148,17 +218,18 @@ namespace Estacionamento.Repositories
             using var conn = new SqliteConnection(ConnectionString);
             conn.Open();
             var cmd = conn.CreateCommand();
-            cmd.CommandText = $@"SELECT Id, Nome, Email, Login, Senha, SenhaHash, SenhaSalt, Tipo
-                                FROM Usuarios
-                                WHERE {campo} = $valor
-                                LIMIT 1";
+            cmd.CommandText = $@"
+                SELECT Id, Nome, Email, Login, Senha, SenhaHash, SenhaSalt, Tipo
+                FROM Usuarios
+                WHERE {campo} = $valor
+                LIMIT 1";
             cmd.Parameters.AddWithValue("$valor", valor);
             using var reader = cmd.ExecuteReader();
-            if (!reader.Read())
-            {
-                return null;
-            }
+            return reader.Read() ? LerUsuario(reader) : null;
+        }
 
+        private static Usuario LerUsuario(SqliteDataReader reader)
+        {
             return new Usuario
             {
                 Id = reader.GetInt32(0),

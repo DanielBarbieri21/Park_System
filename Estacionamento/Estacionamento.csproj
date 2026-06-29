@@ -8,6 +8,17 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AnalysisLevel>latest-recommended</AnalysisLevel>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <Product>ParkSystem - Sistema de Estacionamento</Product>
+    <Company>ParkSystem</Company>
+    <Copyright>Copyright © 2026 ParkSystem</Copyright>
+    <Description>Controle de entrada, saída e faturamento de veículos em estacionamentos.</Description>
+    <ApplicationIcon>Resources\app.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <RuntimeIdentifiers>win-x64;win-x86;win-arm64</RuntimeIdentifiers>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,9 +29,12 @@
   </ItemGroup>
 
     <ItemGroup>
-      <None Update="Resources\logo_parksystem.png">
+      <Content Include="Resources\logo_parksystem.png">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
+      </Content>
+      <Content Include="Resources\app.ico">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
     </ItemGroup>
 
   </Project>

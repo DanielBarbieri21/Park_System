@@ -22,10 +22,14 @@ namespace Estacionamento
 
             var estacionamentoService = new EstacionamentoService(veiculoRepository, clock);
             var relatorioService = new RelatorioService();
+            var databaseBackupService = new DatabaseBackupService();
             var authenticationService = new AuthenticationService(usuarioRepository, log);
             authenticationService.SeedDefaultAdminIfMissing();
 
-            Application.Run(new LoginForm(authenticationService, () => new Form1(estacionamentoService, relatorioService, log), log));
+            Application.Run(new LoginForm(
+                authenticationService,
+                usuario => new Form1(estacionamentoService, relatorioService, databaseBackupService, usuarioRepository, usuario, log),
+                log));
         }
     }
 }

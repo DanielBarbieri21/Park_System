@@ -62,12 +62,7 @@ namespace Estacionamento
             // btnGerarRelatorio
             this.btnGerarRelatorio.Location = new System.Drawing.Point(520, 185);
             this.btnGerarRelatorio.Size = new System.Drawing.Size(150, 70);
-            this.btnGerarRelatorio.Text = "Gerar Relatório (PDF)";
-            this.btnGerarRelatorio.BackColor = System.Drawing.Color.LightSkyBlue;
-            this.btnGerarRelatorio.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
-            this.btnGerarRelatorio.Image = System.Drawing.SystemIcons.WinLogo.ToBitmap();
-            this.btnGerarRelatorio.ImageAlign = System.Drawing.ContentAlignment.TopCenter;
-            this.btnGerarRelatorio.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
+            this.btnGerarRelatorio.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             this.toolTip1.SetToolTip(this.btnGerarRelatorio, "Exporta relatório completo em PDF");
             this.btnGerarRelatorio.Click += new System.EventHandler(this.btnGerarRelatorio_Click);
 
@@ -93,7 +88,7 @@ namespace Estacionamento
             this.groupBoxDados.Controls.Add(this.btnAlterarDados);
             this.groupBoxDados.Controls.Add(this.btnCancelarAtivo);
             this.groupBoxDados.Location = new System.Drawing.Point(20, 190);
-            this.groupBoxDados.Size = new System.Drawing.Size(460, 165);
+            this.groupBoxDados.Size = new System.Drawing.Size(460, 185);
             this.groupBoxDados.Text = "Dados do Veículo";
 
             // label1
@@ -126,62 +121,36 @@ namespace Estacionamento
 
             // btnRegistrarEntrada
             this.btnRegistrarEntrada.Location = new System.Drawing.Point(330, 18);
-            this.btnRegistrarEntrada.Size = new System.Drawing.Size(120, 30);
-            this.btnRegistrarEntrada.Text = "     Registrar Entrada";
-            this.btnRegistrarEntrada.BackColor = System.Drawing.Color.LightGreen;
-            this.btnRegistrarEntrada.Image = System.Drawing.SystemIcons.Information.ToBitmap();
-            this.btnRegistrarEntrada.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.btnRegistrarEntrada.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
-            this.btnRegistrarEntrada.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
+            this.btnRegistrarEntrada.Size = new System.Drawing.Size(120, 34);
+            this.btnRegistrarEntrada.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             this.toolTip1.SetToolTip(this.btnRegistrarEntrada, "Clique para registrar a entrada do veículo");
             this.btnRegistrarEntrada.Click += new System.EventHandler(this.btnRegistrarEntrada_Click);
 
             // btnRegistrarSaida
-            this.btnRegistrarSaida.Location = new System.Drawing.Point(330, 55);
-            this.btnRegistrarSaida.Size = new System.Drawing.Size(120, 30);
-            this.btnRegistrarSaida.Text = "     Saída";
-            this.btnRegistrarSaida.BackColor = System.Drawing.Color.IndianRed;
-            this.btnRegistrarSaida.Image = System.Drawing.SystemIcons.Error.ToBitmap();
-            this.btnRegistrarSaida.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.btnRegistrarSaida.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
-            this.btnRegistrarSaida.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
+            this.btnRegistrarSaida.Location = new System.Drawing.Point(330, 58);
+            this.btnRegistrarSaida.Size = new System.Drawing.Size(120, 34);
+            this.btnRegistrarSaida.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             this.toolTip1.SetToolTip(this.btnRegistrarSaida, "Clique para registrar a saída do veículo");
             this.btnRegistrarSaida.Click += new System.EventHandler(this.BtnRegistrarSaida_Click);
 
             // btnAlterarDados
-            this.btnAlterarDados.Location = new System.Drawing.Point(330, 92);
-            this.btnAlterarDados.Size = new System.Drawing.Size(120, 30);
-            this.btnAlterarDados.Text = "     Alterar";
-            this.btnAlterarDados.BackColor = System.Drawing.Color.Khaki;
-            this.btnAlterarDados.Image = System.Drawing.SystemIcons.Question.ToBitmap();
-            this.btnAlterarDados.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.btnAlterarDados.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
-            this.btnAlterarDados.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
+            this.btnAlterarDados.Location = new System.Drawing.Point(330, 98);
+            this.btnAlterarDados.Size = new System.Drawing.Size(120, 34);
+            this.btnAlterarDados.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             this.toolTip1.SetToolTip(this.btnAlterarDados, "Alterar tipo/valor do veículo ativo pela placa");
             this.btnAlterarDados.Click += new System.EventHandler(this.BtnAlterarDados_Click);
 
             // btnCancelarAtivo
-            // dentro do groupBox, alinhado à coluna de botões
-            this.btnCancelarAtivo.Location = new System.Drawing.Point(330, 129);
-            this.btnCancelarAtivo.Size = new System.Drawing.Size(120, 30);
-            this.btnCancelarAtivo.Text = "     Cancelar Ativo";
-            this.btnCancelarAtivo.BackColor = System.Drawing.Color.LightCoral;
-            this.btnCancelarAtivo.Image = System.Drawing.SystemIcons.Hand.ToBitmap();
-            this.btnCancelarAtivo.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.btnCancelarAtivo.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
-            this.btnCancelarAtivo.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
+            this.btnCancelarAtivo.Location = new System.Drawing.Point(330, 138);
+            this.btnCancelarAtivo.Size = new System.Drawing.Size(120, 34);
+            this.btnCancelarAtivo.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             this.toolTip1.SetToolTip(this.btnCancelarAtivo, "Cancelar/Excluir veículo ativo pela placa");
             this.btnCancelarAtivo.Click += new System.EventHandler(this.BtnCancelarAtivo_Click);
 
             // btnExcluirFinalizado
-            this.btnExcluirFinalizado.Location = new System.Drawing.Point(520, 225);
-            this.btnExcluirFinalizado.Size = new System.Drawing.Size(150, 35);
-            this.btnExcluirFinalizado.Text = "     Excluir Finalizado";
-            this.btnExcluirFinalizado.BackColor = System.Drawing.Color.LightGray;
-            this.btnExcluirFinalizado.Image = System.Drawing.SystemIcons.Shield.ToBitmap();
-            this.btnExcluirFinalizado.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.btnExcluirFinalizado.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
-            this.btnExcluirFinalizado.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
+            this.btnExcluirFinalizado.Location = new System.Drawing.Point(520, 265);
+            this.btnExcluirFinalizado.Size = new System.Drawing.Size(150, 34);
+            this.btnExcluirFinalizado.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             this.toolTip1.SetToolTip(this.btnExcluirFinalizado, "Excluir registro já finalizado pela placa");
             this.btnExcluirFinalizado.Click += new System.EventHandler(this.BtnExcluirFinalizado_Click);
 

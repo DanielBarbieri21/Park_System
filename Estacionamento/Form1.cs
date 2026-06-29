@@ -1,6 +1,8 @@
 using Estacionamento.Models;
 using Estacionamento.Abstractions;
+using Estacionamento.Repositories;
 using Estacionamento.Services;
+using Estacionamento.UI;
 using System;
 using System.Linq;
 using System.Windows.Forms;
@@ -14,6 +16,9 @@ namespace Estacionamento
     {
         private readonly EstacionamentoService _estacionamentoService;
         private readonly RelatorioService _relatorioService;
+        private readonly DatabaseBackupService _databaseBackupService;
+        private readonly IUsuarioRepository _usuarioRepository;
+        private readonly Usuario _usuarioAtual;
         private readonly ILogService _log;
         private System.Windows.Forms.Timer? _refreshTimer;
 
@@ -34,14 +39,27 @@ namespace Estacionamento
         private Chart chartFaturamento = null!;
         private Chart chartTiposVeiculos = null!;
         private ToolTip toolTip = null!;
+        private Button btnUsuarios = null!;
+        private Button btnBackup = null!;
+        private Label lblUsuarioLogado = null!;
 
-        public Form1(EstacionamentoService estacionamentoService, RelatorioService relatorioService, ILogService log)
+        public Form1(
+            EstacionamentoService estacionamentoService,
+            RelatorioService relatorioService,
+            DatabaseBackupService databaseBackupService,
+            IUsuarioRepository usuarioRepository,
+            Usuario usuarioAtual,
+            ILogService log)
         {
             _estacionamentoService = estacionamentoService;
             _relatorioService = relatorioService;
+            _databaseBackupService = databaseBackupService;
+            _usuarioRepository = usuarioRepository;
+            _usuarioAtual = usuarioAtual;
             _log = log;
 
             InitializeComponent();
+            ConfigurarBotoesAcao();
 
             // Configurações do formulário
             this.BackColor = Color.FromArgb(248, 249, 250);
@@ -68,6 +86,153 @@ namespace Estacionamento
             AtualizarGrid();
             AtualizarDashboard();
             AtualizarGraficos();
+        }
+
+        private void ConfigurarBotoesAcao()
+        {
+            ConfigurarCabecalho();
+
+            ButtonStyleHelper.AplicarBotaoAcao(
+                btnRegistrarEntrada, "Registrar",
+                Color.FromArgb(46, 204, 113), IconHelper.Entrada);
+
+            ButtonStyleHelper.AplicarBotaoAcao(
+                btnRegistrarSaida, "Saída",
+                Color.FromArgb(231, 76, 60), IconHelper.Saida);
+
+            ButtonStyleHelper.AplicarBotaoAcao(
+                btnAlterarDados, "Alterar",
+                Color.FromArgb(241, 196, 15), IconHelper.Alterar, Color.FromArgb(52, 73, 94));
+
+            ButtonStyleHelper.AplicarBotaoAcao(
+                btnCancelarAtivo, "Cancelar",
+                Color.FromArgb(192, 57, 43), IconHelper.Cancelar);
+
+            ButtonStyleHelper.AlinharColunaBotoes(
+                btnRegistrarEntrada,
+                btnRegistrarSaida,
+                btnAlterarDados,
+                btnCancelarAtivo);
+
+            ButtonStyleHelper.AplicarBotaoRelatorio(btnGerarRelatorio);
+
+            ButtonStyleHelper.AplicarBotaoSecundario(
+                btnExcluirFinalizado, "Excluir Finalizado", IconHelper.Excluir);
+        }
+
+        private void ConfigurarCabecalho()
+        {
+            var appIcon = AppBranding.LoadAppIcon();
+            if (appIcon != null)
+            {
+                Icon = appIcon;
+            }
+
+            lblTitulo.Text = "  ParkSystem  |  Sistema de Estacionamento";
+            lblTitulo.Font = new Font("Segoe UI Semibold", 13F, FontStyle.Bold);
+            lblTitulo.Height = 48;
+            lblTitulo.BackColor = AppBranding.PrimaryDark;
+            lblTitulo.ForeColor = Color.White;
+            lblTitulo.TextAlign = ContentAlignment.MiddleLeft;
+            lblTitulo.Padding = new Padding(16, 0, 0, 0);
+
+            lblUsuarioLogado = new Label
+            {
+                Text = $"{_usuarioAtual.Nome} ({_usuarioAtual.Tipo})",
+                Size = new Size(210, 30),
+                Location = new Point(ClientSize.Width - 470, 9),
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                BackColor = AppBranding.PrimaryDark,
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+                TextAlign = ContentAlignment.MiddleRight
+            };
+
+            btnBackup = new Button
+            {
+                Text = "Backup",
+                Size = new Size(95, 30),
+                Location = new Point(ClientSize.Width - 235, 9),
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                BackColor = Color.FromArgb(46, 204, 113),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+                Cursor = Cursors.Hand,
+                Visible = _usuarioAtual.Tipo == TipoUsuario.Admin
+            };
+            btnBackup.FlatAppearance.BorderSize = 0;
+            btnBackup.Click += BtnBackup_Click;
+
+            btnUsuarios = new Button
+            {
+                Text = "Usuários",
+                Size = new Size(115, 30),
+                Location = new Point(ClientSize.Width - 135, 9),
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                BackColor = Color.FromArgb(52, 152, 219),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+                Cursor = Cursors.Hand,
+                Visible = _usuarioAtual.Tipo == TipoUsuario.Admin
+            };
+            btnUsuarios.FlatAppearance.BorderSize = 0;
+            btnUsuarios.Click += BtnUsuarios_Click;
+
+            Controls.Add(lblUsuarioLogado);
+            Controls.Add(btnBackup);
+            Controls.Add(btnUsuarios);
+            lblUsuarioLogado.BringToFront();
+            btnBackup.BringToFront();
+            btnUsuarios.BringToFront();
+        }
+
+        private void BtnUsuarios_Click(object? sender, EventArgs e)
+        {
+            if (_usuarioAtual.Tipo != TipoUsuario.Admin)
+            {
+                MessageBox.Show("Apenas administradores podem gerenciar usuários.", "Acesso restrito", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            using var form = new UserManagementForm(_usuarioRepository, _usuarioAtual, _log);
+            form.ShowDialog(this);
+        }
+
+        private void BtnBackup_Click(object? sender, EventArgs e)
+        {
+            if (_usuarioAtual.Tipo != TipoUsuario.Admin)
+            {
+                MessageBox.Show("Apenas administradores podem gerar backup.", "Acesso restrito", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            using var saveDialog = new SaveFileDialog
+            {
+                Title = "Salvar backup do banco de dados",
+                Filter = "Backup SQLite (*.db)|*.db|Todos os arquivos (*.*)|*.*",
+                FileName = DatabaseBackupService.CriarNomePadrao(),
+                AddExtension = true,
+                DefaultExt = "db"
+            };
+
+            if (saveDialog.ShowDialog(this) != DialogResult.OK)
+            {
+                return;
+            }
+
+            try
+            {
+                var backupPath = _databaseBackupService.CriarBackup(saveDialog.FileName);
+                _log.Info($"Backup do banco gerado: {backupPath}");
+                MessageBox.Show("Backup gerado com sucesso.", "Backup", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                _log.Error("Erro ao gerar backup do banco.", ex);
+                MessageBox.Show(ex.Message, "Erro ao gerar backup", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void CriarLayoutLimpo()
@@ -227,7 +392,7 @@ namespace Estacionamento
             // Painel de filtro simples
             var panelFiltro = new Panel
             {
-                Location = new Point(20, 370),
+                Location = new Point(20, 395),
                 Size = new Size(1160, 50),
                 BackColor = Color.White,
                 BorderStyle = BorderStyle.FixedSingle
@@ -415,8 +580,8 @@ namespace Estacionamento
         private void AjustarDataGridView()
         {
             // Ajustar posição e tamanho do DataGridView (abaixo do filtro)
-            dgvVeiculos.Location = new Point(20, 430);
-            dgvVeiculos.Size = new Size(1160, 210);
+            dgvVeiculos.Location = new Point(20, 455);
+            dgvVeiculos.Size = new Size(1160, 185);
             dgvVeiculos.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             dgvVeiculos.BackColor = Color.White;
             dgvVeiculos.BorderStyle = BorderStyle.FixedSingle;

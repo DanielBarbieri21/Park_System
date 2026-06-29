@@ -1,4 +1,5 @@
 ﻿using Estacionamento.Models;
+using Estacionamento.Infrastructure;
 using Microsoft.Data.Sqlite;
 using System;
 using System.Collections.Generic;
@@ -8,7 +9,7 @@ namespace Estacionamento.Repositories
 {
     public class VeiculoRepositorySQLite : IVeiculoRepository
     {
-        private const string ConnectionString = "Data Source=estacionamento.db";
+        private static string ConnectionString => $"Data Source={AppPaths.GetDataFilePath("estacionamento.db")}";
 
         public VeiculoRepositorySQLite()
         {

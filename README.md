@@ -38,6 +38,19 @@ Aplicacao desktop para controle de entrada e saida de veiculos, com dashboard op
 
 ### 6) Operacao e entrega
 - Pipeline GitHub Actions (`.github/workflows/ci.yml`) com restore, build e test.
+- Empacotamento MSIX para Microsoft Store em `Estacionamento.Package/`.
+- Guia completo de publicacao: `docs/STORE_PUBLISHING.md`.
+- Politica de privacidade: `docs/privacy-policy.html` (hospedar online para a Store).
+
+## Publicacao na Microsoft Store
+
+1. Instale no Visual Studio a carga **Ferramentas de empacotamento MSIX** e o **Windows 10 SDK (10.0.19041+)**.
+2. Gere os icones (se necessario):
+   - `dotnet run --project tools/GenerateAppIcons/GenerateAppIcons.csproj`
+3. Empacote o app:
+   - Visual Studio: projeto `Estacionamento.Package` → **Criar pacotes de aplicativos**
+   - Ou: `.\scripts\build-msix.ps1 -Configuration Release`
+4. Siga o passo a passo em `docs/STORE_PUBLISHING.md`.
 
 ## Estrutura principal
 
