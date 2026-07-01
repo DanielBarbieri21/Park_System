@@ -10,13 +10,13 @@ namespace Estacionamento.Models
         public DateTime Entrada { get; set; }
         public DateTime? Saida { get; set; }
         public decimal ValorHora { get; set; }
+        public decimal ValorHoraAdicional { get; set; }
 
         public TimeSpan TempoPermanencia => (Saida ?? DateTime.UtcNow) - Entrada;
 
         public decimal CalcularValor()
         {
-            var horas = (decimal)Math.Ceiling(TempoPermanencia.TotalHours);
-            return horas * ValorHora;
+            return Services.CobrancaCalculadora.Calcular(TempoPermanencia, ValorHora, ValorHoraAdicional);
         }
     }
 }

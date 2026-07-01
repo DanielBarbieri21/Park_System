@@ -1,4 +1,4 @@
-﻿using Estacionamento.Abstractions;
+using Estacionamento.Abstractions;
 using Estacionamento.Models;
 using Estacionamento.Repositories;
 using System;
@@ -18,16 +18,21 @@ namespace Estacionamento.Services
             _clock = clock;
         }
 
-        public void RegistrarEntrada(string placa, TipoVeiculo tipo, decimal valorHora)
+        public void RegistrarEntrada(string placa, TipoVeiculo tipo, decimal valorPrimeiraHora, decimal valorHoraAdicional)
         {
             if (string.IsNullOrWhiteSpace(placa))
             {
                 throw new ArgumentException("A placa nao pode ser vazia.");
             }
 
-            if (valorHora <= 0)
+            if (valorPrimeiraHora <= 0)
             {
-                throw new ArgumentException("O valor por hora deve ser positivo.");
+                throw new ArgumentException("O valor da primeira hora deve ser positivo.");
+            }
+
+            if (valorHoraAdicional <= 0)
+            {
+                throw new ArgumentException("O valor da hora adicional deve ser positivo.");
             }
 
             var existenteAtivo = _repository.ObterAtivoPorPlaca(placa);
@@ -41,7 +46,8 @@ namespace Estacionamento.Services
                 Placa = placa.ToUpperInvariant(),
                 Tipo = tipo,
                 Entrada = _clock.UtcNow,
-                ValorHora = valorHora
+                ValorHora = valorPrimeiraHora,
+                ValorHoraAdicional = valorHoraAdicional
             };
 
             _repository.Adicionar(novoVeiculo);
@@ -67,6 +73,7 @@ namespace Estacionamento.Services
                 Tipo = ativo.Tipo,
                 Entrada = ativo.Entrada,
                 ValorHora = ativo.ValorHora,
+                ValorHoraAdicional = ativo.ValorHoraAdicional,
                 Saida = _clock.UtcNow
             };
         }
@@ -83,16 +90,21 @@ namespace Estacionamento.Services
             return atualizado;
         }
 
-        public void AlterarDadosVeiculo(string placa, TipoVeiculo novoTipo, decimal novoValorHora)
+        public void AlterarDadosVeiculo(string placa, TipoVeiculo novoTipo, decimal valorPrimeiraHora, decimal valorHoraAdicional)
         {
             if (string.IsNullOrWhiteSpace(placa))
             {
                 throw new ArgumentException("A placa nao pode ser vazia.");
             }
 
-            if (novoValorHora <= 0)
+            if (valorPrimeiraHora <= 0)
             {
-                throw new ArgumentException("O valor por hora deve ser positivo.");
+                throw new ArgumentException("O valor da primeira hora deve ser positivo.");
+            }
+
+            if (valorHoraAdicional <= 0)
+            {
+                throw new ArgumentException("O valor da hora adicional deve ser positivo.");
             }
 
             var veiculo = _repository.ObterAtivoPorPlaca(placa);
@@ -101,7 +113,7 @@ namespace Estacionamento.Services
                 throw new InvalidOperationException("Veiculo nao encontrado ou ja finalizado.");
             }
 
-            _repository.AtualizarDados(placa, novoTipo, novoValorHora);
+            _repository.AtualizarDados(placa, novoTipo, valorPrimeiraHora, valorHoraAdicional);
         }
 
         public void CancelarVeiculoAtivo(string placa)

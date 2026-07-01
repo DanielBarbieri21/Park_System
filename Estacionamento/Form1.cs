@@ -353,6 +353,25 @@ namespace Estacionamento
 
             // Evento para mostrar valor estimado quando digitar valor por hora
             txtValorHora.TextChanged += TxtValorHora_TextChanged;
+            txtValorHoraAdicional.TextChanged += TxtValorHora_TextChanged;
+
+            // Carregar tarifas automáticas ao selecionar o tipo de veículo
+            if (cmbTipoVeiculo != null)
+            {
+                cmbTipoVeiculo.SelectedIndexChanged += CmbTipoVeiculo_SelectedIndexChanged;
+                // Executar a primeira vez para carregar o padrão
+                CmbTipoVeiculo_SelectedIndexChanged(cmbTipoVeiculo, EventArgs.Empty);
+            }
+        }
+
+        private void CmbTipoVeiculo_SelectedIndexChanged(object? sender, EventArgs e)
+        {
+            if (cmbTipoVeiculo.SelectedItem is TipoVeiculo tipo)
+            {
+                var tarifa = TarifasPadrao.Obter(tipo);
+                txtValorHora.Text = tarifa.PrimeiraHora.ToString("F2");
+                txtValorHoraAdicional.Text = tarifa.HoraAdicional.ToString("F2");
+            }
         }
 
         private void Timer_Tick(object? sender, EventArgs e)
@@ -364,9 +383,10 @@ namespace Estacionamento
 
         private void TxtValorHora_TextChanged(object? sender, EventArgs e)
         {
-            // Mostrar valor estimado se houver placa e valor por hora
+            // Mostrar valor estimado se houver placa e valores de tarifa preenchidos
             if (!string.IsNullOrEmpty(txtPlaca.Text) && 
-                TryParseValorHora(txtValorHora.Text, out decimal valorHora))
+                TryParseValorHora(txtValorHora.Text, out decimal valorHora) &&
+                TryParseValorHora(txtValorHoraAdicional.Text, out decimal valorHoraAdicional))
             {
                 var veiculos = _estacionamentoService.ListarVeiculosEstacionados();
                 var veiculo = veiculos.FirstOrDefault(v => v.Placa.Equals(txtPlaca.Text, StringComparison.OrdinalIgnoreCase));
@@ -374,17 +394,16 @@ namespace Estacionamento
                 if (veiculo != null)
                 {
                     var tempoDecorrido = DateTime.UtcNow - veiculo.Entrada;
-                    var valorEstimado = CalcularValorEstimado(tempoDecorrido, valorHora);
+                    var valorEstimado = Services.CobrancaCalculadora.Calcular(tempoDecorrido, valorHora, valorHoraAdicional);
                     toolTip.SetToolTip(txtValorHora, $"Valor estimado: R$ {valorEstimado:F2}");
+                    toolTip.SetToolTip(txtValorHoraAdicional, $"Valor estimado: R$ {valorEstimado:F2}");
                 }
             }
         }
 
-        private decimal CalcularValorEstimado(TimeSpan tempo, decimal valorHora)
+        private decimal CalcularValorEstimado(TimeSpan tempo, decimal valorHora, decimal valorHoraAdicional)
         {
-            // Calcular valor baseado no tempo decorrido
-            var horas = (decimal)tempo.TotalHours;
-            return Math.Ceiling(horas) * valorHora; // Arredondar para cima
+            return Services.CobrancaCalculadora.Calcular(tempo, valorHora, valorHoraAdicional);
         }
 
         private void CriarFiltroSimples()
@@ -773,9 +792,16 @@ namespace Estacionamento
                     return;
                 }
 
-                if (!TryParseValorHora(txtValorHora.Text, out decimal valorHora) || valorHora <= 0)
+                if (!TryParseValorHora(txtValorHora.Text, out decimal valorPrimeiraHora) || valorPrimeiraHora <= 0)
                 {
-                    MessageBox.Show("Informe um valor por hora válido e maior que zero.", "Valor Inválido", 
+                    MessageBox.Show("Informe um valor de primeira hora válido e maior que zero.", "Valor Inválido", 
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                if (!TryParseValorHora(txtValorHoraAdicional.Text, out decimal valorHoraAdicional) || valorHoraAdicional <= 0)
+                {
+                    MessageBox.Show("Informe um valor de hora adicional válido e maior que zero.", "Valor Inválido", 
                         MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
@@ -787,12 +813,14 @@ namespace Estacionamento
                     _estacionamentoService.RegistrarEntrada(
                         placaFormatada,
                         tipoVeiculo,
-                        valorHora
+                        valorPrimeiraHora,
+                        valorHoraAdicional
                     );
 
                     // Limpar campos após entrada
                     txtPlaca.Clear();
                     txtValorHora.Clear();
+                    txtValorHoraAdicional.Clear();
                     cmbTipoVeiculo.SelectedIndex = 0;
                     
                     AtualizarGrid();
@@ -855,6 +883,7 @@ namespace Estacionamento
                     // Limpar campos após saída
                     txtPlaca.Clear();
                     txtValorHora.Clear();
+                    txtValorHoraAdicional.Clear();
                     
                     MessageBox.Show($"Saída registrada com sucesso!\nValor cobrado: R$ {valor:F2}", 
                         "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -886,13 +915,19 @@ namespace Estacionamento
                     MessageBox.Show("Selecione o tipo de veículo.");
                     return;
                 }
-                if (!TryParseValorHora(txtValorHora.Text, out decimal novoValorHora) || novoValorHora <= 0)
+                if (!TryParseValorHora(txtValorHora.Text, out decimal valorPrimeiraHora) || valorPrimeiraHora <= 0)
                 {
-                    MessageBox.Show("Informe um valor por hora válido.");
+                    MessageBox.Show("Informe um valor de primeira hora válido.");
                     return;
                 }
 
-                _estacionamentoService.AlterarDadosVeiculo(txtPlaca.Text.ToUpper(), novoTipo, novoValorHora);
+                if (!TryParseValorHora(txtValorHoraAdicional.Text, out decimal valorHoraAdicional) || valorHoraAdicional <= 0)
+                {
+                    MessageBox.Show("Informe um valor de hora adicional válido.");
+                    return;
+                }
+
+                _estacionamentoService.AlterarDadosVeiculo(txtPlaca.Text.ToUpper(), novoTipo, valorPrimeiraHora, valorHoraAdicional);
                 AtualizarGrid();
                 AtualizarDashboard();
                 AtualizarGraficos();
@@ -965,8 +1000,8 @@ namespace Estacionamento
                 Saída = v.Saida?.ToLocalTime().ToString("HH:mm:ss") ?? "-",
                 Tempo = v.Saida != null ? v.TempoPermanencia.ToString(@"hh\:mm") : (DateTime.UtcNow - v.Entrada).ToString(@"hh\:mm"),
                 Valor = v.Saida != null ? $"R$ {v.CalcularValor():F2}" : 
-                        TryParseValorHora(txtValorHora.Text, out decimal valorHora) ?
-                        $"R$ {CalcularValorEstimado(DateTime.UtcNow - v.Entrada, valorHora):F2}" : "R$ 0,00",
+                        (TryParseValorHora(txtValorHora.Text, out decimal valorHora) && TryParseValorHora(txtValorHoraAdicional.Text, out decimal valorHoraAdicional)) ?
+                        $"R$ {CalcularValorEstimado(DateTime.UtcNow - v.Entrada, valorHora, valorHoraAdicional):F2}" : "R$ 0,00",
                 Finalizado = v.Saida != null
             }).ToList();
             dgvVeiculos.AutoGenerateColumns = true;

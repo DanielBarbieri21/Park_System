@@ -1,4 +1,4 @@
-﻿using Estacionamento.Models;
+using Estacionamento.Models;
 using Estacionamento.Infrastructure;
 using Microsoft.Data.Sqlite;
 using System;
@@ -31,6 +31,7 @@ namespace Estacionamento.Repositories
                     Entrada TEXT NOT NULL,
                     Saida TEXT,
                     ValorHora REAL NOT NULL,
+                    ValorHoraAdicional REAL NOT NULL DEFAULT 0,
                     CreatedAtUtc TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP),
                     UpdatedAtUtc TEXT
                 );";
@@ -79,6 +80,13 @@ ALTER TABLE Veiculos_new RENAME TO Veiculos;";
                 cmd.CommandText = "ALTER TABLE Veiculos ADD COLUMN UpdatedAtUtc TEXT;";
                 cmd.ExecuteNonQuery();
             }
+
+            if (!ColunaExiste(conn, "Veiculos", "ValorHoraAdicional"))
+            {
+                using var cmd = conn.CreateCommand();
+                cmd.CommandText = "ALTER TABLE Veiculos ADD COLUMN ValorHoraAdicional REAL NOT NULL DEFAULT 0;";
+                cmd.ExecuteNonQuery();
+            }
         }
 
         private static bool ColunaExiste(SqliteConnection conn, string tabela, string coluna)
@@ -119,14 +127,15 @@ ALTER TABLE Veiculos_new RENAME TO Veiculos;";
             conn.Open();
             using var cmd = conn.CreateCommand();
             cmd.CommandText = @"
-                INSERT INTO Veiculos (Placa, Tipo, Entrada, Saida, ValorHora, UpdatedAtUtc)
-                VALUES ($placa, $tipo, $entrada, $saida, $valorHora, $updatedAtUtc);
+                INSERT INTO Veiculos (Placa, Tipo, Entrada, Saida, ValorHora, ValorHoraAdicional, UpdatedAtUtc)
+                VALUES ($placa, $tipo, $entrada, $saida, $valorHora, $valorHoraAdicional, $updatedAtUtc);
                 SELECT last_insert_rowid();";
             cmd.Parameters.AddWithValue("$placa", veiculo.Placa);
             cmd.Parameters.AddWithValue("$tipo", (int)veiculo.Tipo);
             cmd.Parameters.AddWithValue("$entrada", ToIso(veiculo.Entrada));
             cmd.Parameters.AddWithValue("$saida", veiculo.Saida == null ? DBNull.Value : ToIso(veiculo.Saida.Value));
             cmd.Parameters.AddWithValue("$valorHora", veiculo.ValorHora);
+            cmd.Parameters.AddWithValue("$valorHoraAdicional", veiculo.ValorHoraAdicional);
             cmd.Parameters.AddWithValue("$updatedAtUtc", ToIso(DateTime.UtcNow));
 
             var newId = Convert.ToInt32(cmd.ExecuteScalar());
@@ -143,11 +152,13 @@ ALTER TABLE Veiculos_new RENAME TO Veiculos;";
                 SET Saida = $saida,
                     Tipo = $tipo,
                     ValorHora = $valorHora,
+                    ValorHoraAdicional = $valorHoraAdicional,
                     UpdatedAtUtc = $updatedAtUtc
                 WHERE Id = $id";
             cmd.Parameters.AddWithValue("$id", veiculo.Id);
             cmd.Parameters.AddWithValue("$tipo", (int)veiculo.Tipo);
             cmd.Parameters.AddWithValue("$valorHora", veiculo.ValorHora);
+            cmd.Parameters.AddWithValue("$valorHoraAdicional", veiculo.ValorHoraAdicional);
             cmd.Parameters.AddWithValue("$saida", veiculo.Saida == null ? DBNull.Value : ToIso(veiculo.Saida.Value));
             cmd.Parameters.AddWithValue("$updatedAtUtc", ToIso(DateTime.UtcNow));
             cmd.ExecuteNonQuery();
@@ -169,7 +180,7 @@ ALTER TABLE Veiculos_new RENAME TO Veiculos;";
             cmd.ExecuteNonQuery();
         }
 
-        public void AtualizarDados(string placa, TipoVeiculo tipo, decimal valorHora)
+        public void AtualizarDados(string placa, TipoVeiculo tipo, decimal valorHora, decimal valorHoraAdicional)
         {
             using var conn = new SqliteConnection(ConnectionString);
             conn.Open();
@@ -178,12 +189,14 @@ ALTER TABLE Veiculos_new RENAME TO Veiculos;";
                 UPDATE Veiculos
                 SET Tipo = $tipo,
                     ValorHora = $valorHora,
+                    ValorHoraAdicional = $valorHoraAdicional,
                     UpdatedAtUtc = $updatedAtUtc
                 WHERE UPPER(Placa) = UPPER($placa)
                   AND (Saida IS NULL OR Saida = '')";
             cmd.Parameters.AddWithValue("$placa", placa);
             cmd.Parameters.AddWithValue("$tipo", (int)tipo);
             cmd.Parameters.AddWithValue("$valorHora", valorHora);
+            cmd.Parameters.AddWithValue("$valorHoraAdicional", valorHoraAdicional);
             cmd.Parameters.AddWithValue("$updatedAtUtc", ToIso(DateTime.UtcNow));
             cmd.ExecuteNonQuery();
         }
@@ -214,7 +227,7 @@ ALTER TABLE Veiculos_new RENAME TO Veiculos;";
             conn.Open();
             using var cmd = conn.CreateCommand();
             cmd.CommandText = @"
-                SELECT Id, Placa, Tipo, Entrada, Saida, ValorHora
+                SELECT Id, Placa, Tipo, Entrada, Saida, ValorHora, ValorHoraAdicional
                 FROM Veiculos
                 WHERE UPPER(Placa) = UPPER($placa)
                   AND (Saida IS NULL OR Saida = '')
@@ -231,7 +244,7 @@ ALTER TABLE Veiculos_new RENAME TO Veiculos;";
             conn.Open();
             using var cmd = conn.CreateCommand();
             cmd.CommandText = @"
-                SELECT Id, Placa, Tipo, Entrada, Saida, ValorHora
+                SELECT Id, Placa, Tipo, Entrada, Saida, ValorHora, ValorHoraAdicional
                 FROM Veiculos
                 WHERE Id = $id
                 LIMIT 1";
@@ -247,7 +260,7 @@ ALTER TABLE Veiculos_new RENAME TO Veiculos;";
             conn.Open();
             using var cmd = conn.CreateCommand();
             cmd.CommandText = @"
-                SELECT Id, Placa, Tipo, Entrada, Saida, ValorHora
+                SELECT Id, Placa, Tipo, Entrada, Saida, ValorHora, ValorHoraAdicional
                 FROM Veiculos
                 ORDER BY Entrada DESC";
             using var reader = cmd.ExecuteReader();
@@ -268,7 +281,8 @@ ALTER TABLE Veiculos_new RENAME TO Veiculos;";
                 Tipo = (TipoVeiculo)reader.GetInt32(2),
                 Entrada = ParseIso(reader.GetString(3)),
                 Saida = reader.IsDBNull(4) || string.IsNullOrWhiteSpace(reader.GetString(4)) ? null : ParseIso(reader.GetString(4)),
-                ValorHora = reader.GetDecimal(5)
+                ValorHora = reader.GetDecimal(5),
+                ValorHoraAdicional = reader.GetDecimal(6)
             };
         }
 

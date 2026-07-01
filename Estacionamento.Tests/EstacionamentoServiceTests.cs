@@ -1,4 +1,4 @@
-﻿using Estacionamento.Abstractions;
+using Estacionamento.Abstractions;
 using Estacionamento.Models;
 using Estacionamento.Repositories;
 using Estacionamento.Services;
@@ -17,7 +17,7 @@ public class EstacionamentoServiceTests
         var repo = new InMemoryVeiculoRepository();
         var service = new EstacionamentoService(repo, new FixedClock(new DateTime(2026, 4, 4, 12, 0, 0, DateTimeKind.Utc)));
 
-        service.RegistrarEntrada("ABC1234", TipoVeiculo.Carro, 10m);
+        service.RegistrarEntrada("ABC1234", TipoVeiculo.Carro, 10m, 8m);
 
         var ativo = repo.ObterAtivoPorPlaca("ABC1234");
         Assert.NotNull(ativo);
@@ -31,14 +31,14 @@ public class EstacionamentoServiceTests
         var repo = new InMemoryVeiculoRepository();
         var clock = new FixedClock(new DateTime(2026, 4, 4, 10, 0, 0, DateTimeKind.Utc));
         var service = new EstacionamentoService(repo, clock);
-        service.RegistrarEntrada("DEF1G23", TipoVeiculo.Moto, 5m);
+        service.RegistrarEntrada("DEF1G23", TipoVeiculo.Moto, 5m, 5m);
 
         clock.UtcNowValue = new DateTime(2026, 4, 4, 11, 10, 0, DateTimeKind.Utc);
         var preview = service.SimularSaida("DEF1G23");
         var finalizado = service.ConfirmarSaida(preview.Id, preview.Saida!.Value);
 
         Assert.NotNull(finalizado.Saida);
-        Assert.True(finalizado.CalcularValor() >= 10m);
+        Assert.Equal(5.83m, finalizado.CalcularValor());
     }
 
     private sealed class FixedClock : IClock
@@ -65,12 +65,13 @@ public class EstacionamentoServiceTests
             if (idx >= 0) _items[idx] = veiculo;
         }
 
-        public void AtualizarDados(string placa, TipoVeiculo tipo, decimal valorHora)
+        public void AtualizarDados(string placa, TipoVeiculo tipo, decimal valorHora, decimal valorHoraAdicional)
         {
             var ativo = ObterAtivoPorPlaca(placa);
             if (ativo == null) return;
             ativo.Tipo = tipo;
             ativo.ValorHora = valorHora;
+            ativo.ValorHoraAdicional = valorHoraAdicional;
         }
 
         public void RemoverAtivoPorPlaca(string placa)

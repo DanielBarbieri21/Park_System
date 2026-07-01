@@ -9,6 +9,7 @@ namespace Estacionamento
         private System.Windows.Forms.TextBox txtPlaca;
         private System.Windows.Forms.ComboBox cmbTipoVeiculo;
         private System.Windows.Forms.TextBox txtValorHora;
+        private System.Windows.Forms.TextBox txtValorHoraAdicional;
         private System.Windows.Forms.Button btnRegistrarEntrada;
         private System.Windows.Forms.Button btnRegistrarSaida;
         private System.Windows.Forms.Button btnAlterarDados;
@@ -18,6 +19,7 @@ namespace Estacionamento
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Label lblTitulo;
         private System.Windows.Forms.GroupBox groupBoxDados;
         private System.Windows.Forms.ToolTip toolTip1;
@@ -38,6 +40,8 @@ namespace Estacionamento
             this.txtPlaca = new System.Windows.Forms.TextBox();
             this.cmbTipoVeiculo = new System.Windows.Forms.ComboBox();
             this.txtValorHora = new System.Windows.Forms.TextBox();
+            this.txtValorHoraAdicional = new System.Windows.Forms.TextBox();
+            this.label4 = new System.Windows.Forms.Label();
             this.btnRegistrarEntrada = new System.Windows.Forms.Button();
             this.btnRegistrarSaida = new System.Windows.Forms.Button();
             this.dgvVeiculos = new System.Windows.Forms.DataGridView();
@@ -79,9 +83,11 @@ namespace Estacionamento
             this.groupBoxDados.Controls.Add(this.txtPlaca);
             this.groupBoxDados.Controls.Add(this.cmbTipoVeiculo);
             this.groupBoxDados.Controls.Add(this.txtValorHora);
+            this.groupBoxDados.Controls.Add(this.txtValorHoraAdicional);
             this.groupBoxDados.Controls.Add(this.label1);
             this.groupBoxDados.Controls.Add(this.label2);
             this.groupBoxDados.Controls.Add(this.label3);
+            this.groupBoxDados.Controls.Add(this.label4);
             // adiciona os botões dentro do groupBox
             this.groupBoxDados.Controls.Add(this.btnRegistrarEntrada);
             this.groupBoxDados.Controls.Add(this.btnRegistrarSaida);
@@ -113,11 +119,20 @@ namespace Estacionamento
             // label3
             this.label3.Location = new System.Drawing.Point(10, 74);
             this.label3.Size = new System.Drawing.Size(70, 13);
-            this.label3.Text = "Valor Hora:";
+            this.label3.Text = "1ª hora:";
 
             // txtValorHora
             this.txtValorHora.Location = new System.Drawing.Point(90, 71);
             this.txtValorHora.Size = new System.Drawing.Size(190, 20);
+
+            // label4
+            this.label4.Location = new System.Drawing.Point(10, 100);
+            this.label4.Size = new System.Drawing.Size(70, 13);
+            this.label4.Text = "Adicional:";
+
+            // txtValorHoraAdicional
+            this.txtValorHoraAdicional.Location = new System.Drawing.Point(90, 97);
+            this.txtValorHoraAdicional.Size = new System.Drawing.Size(190, 20);
 
             // btnRegistrarEntrada
             this.btnRegistrarEntrada.Location = new System.Drawing.Point(330, 18);

@@ -1,4 +1,4 @@
-﻿using Estacionamento.Models;
+using Estacionamento.Models;
 using System;
 using System.Collections.Generic;
 
@@ -8,7 +8,7 @@ namespace Estacionamento.Repositories
     {
         void Adicionar(Veiculo veiculo);
         void Atualizar(Veiculo veiculo);
-        void AtualizarDados(string placa, TipoVeiculo tipo, decimal valorHora);
+        void AtualizarDados(string placa, TipoVeiculo tipo, decimal valorHora, decimal valorHoraAdicional);
         void RemoverAtivoPorPlaca(string placa);
         void RemoverFinalizadoPorPlaca(string placa);
         Veiculo? ObterAtivoPorPlaca(string placa);
