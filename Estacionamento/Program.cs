@@ -1,4 +1,4 @@
-﻿using Estacionamento.Abstractions;
+using Estacionamento.Abstractions;
 using Estacionamento.Infrastructure;
 using Estacionamento.Repositories;
 using Estacionamento.Services;
@@ -19,6 +19,7 @@ namespace Estacionamento
             ILogService log = new FileLogService();
             IVeiculoRepository veiculoRepository = new VeiculoRepositorySQLite();
             IUsuarioRepository usuarioRepository = new UsuarioRepositorySQLite();
+            IMensalistaRepository mensalistaRepository = new MensalistaRepositorySQLite();
 
             var estacionamentoService = new EstacionamentoService(veiculoRepository, clock);
             var relatorioService = new RelatorioService();
@@ -28,7 +29,7 @@ namespace Estacionamento
 
             Application.Run(new LoginForm(
                 authenticationService,
-                usuario => new Form1(estacionamentoService, relatorioService, databaseBackupService, usuarioRepository, usuario, log),
+                usuario => new Form1(estacionamentoService, relatorioService, databaseBackupService, usuarioRepository, mensalistaRepository, usuario, log),
                 log));
         }
     }

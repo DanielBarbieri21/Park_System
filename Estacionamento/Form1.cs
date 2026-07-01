@@ -18,9 +18,11 @@ namespace Estacionamento
         private readonly RelatorioService _relatorioService;
         private readonly DatabaseBackupService _databaseBackupService;
         private readonly IUsuarioRepository _usuarioRepository;
+        private readonly IMensalistaRepository _mensalistaRepository;
         private readonly Usuario _usuarioAtual;
         private readonly ILogService _log;
         private System.Windows.Forms.Timer? _refreshTimer;
+        private MenuStrip menuStripSuperior = null!;
 
         // Controles da interface moderna
         private Panel panelDashboard = null!;
@@ -48,6 +50,7 @@ namespace Estacionamento
             RelatorioService relatorioService,
             DatabaseBackupService databaseBackupService,
             IUsuarioRepository usuarioRepository,
+            IMensalistaRepository mensalistaRepository,
             Usuario usuarioAtual,
             ILogService log)
         {
@@ -55,6 +58,7 @@ namespace Estacionamento
             _relatorioService = relatorioService;
             _databaseBackupService = databaseBackupService;
             _usuarioRepository = usuarioRepository;
+            _mensalistaRepository = mensalistaRepository;
             _usuarioAtual = usuarioAtual;
             _log = log;
 
@@ -68,6 +72,9 @@ namespace Estacionamento
 
             // ToolTip
             toolTip = new ToolTip();
+
+            // Criar menu superior
+            CriarMenuSuperior();
 
             // Criar layout limpo e organizado
             CriarLayoutLimpo();
@@ -140,52 +147,14 @@ namespace Estacionamento
             {
                 Text = $"{_usuarioAtual.Nome} ({_usuarioAtual.Tipo})",
                 Size = new Size(210, 30),
-                Location = new Point(ClientSize.Width - 470, 9),
-                Anchor = AnchorStyles.Top | AnchorStyles.Right,
                 BackColor = AppBranding.PrimaryDark,
                 ForeColor = Color.White,
                 Font = new Font("Segoe UI", 9F, FontStyle.Bold),
                 TextAlign = ContentAlignment.MiddleRight
             };
 
-            btnBackup = new Button
-            {
-                Text = "Backup",
-                Size = new Size(95, 30),
-                Location = new Point(ClientSize.Width - 235, 9),
-                Anchor = AnchorStyles.Top | AnchorStyles.Right,
-                BackColor = Color.FromArgb(46, 204, 113),
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Font = new Font("Segoe UI", 9F, FontStyle.Bold),
-                Cursor = Cursors.Hand,
-                Visible = _usuarioAtual.Tipo == TipoUsuario.Admin
-            };
-            btnBackup.FlatAppearance.BorderSize = 0;
-            btnBackup.Click += BtnBackup_Click;
-
-            btnUsuarios = new Button
-            {
-                Text = "Usuários",
-                Size = new Size(115, 30),
-                Location = new Point(ClientSize.Width - 135, 9),
-                Anchor = AnchorStyles.Top | AnchorStyles.Right,
-                BackColor = Color.FromArgb(52, 152, 219),
-                ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Font = new Font("Segoe UI", 9F, FontStyle.Bold),
-                Cursor = Cursors.Hand,
-                Visible = _usuarioAtual.Tipo == TipoUsuario.Admin
-            };
-            btnUsuarios.FlatAppearance.BorderSize = 0;
-            btnUsuarios.Click += BtnUsuarios_Click;
-
             Controls.Add(lblUsuarioLogado);
-            Controls.Add(btnBackup);
-            Controls.Add(btnUsuarios);
             lblUsuarioLogado.BringToFront();
-            btnBackup.BringToFront();
-            btnUsuarios.BringToFront();
         }
 
         private void BtnUsuarios_Click(object? sender, EventArgs e)
@@ -237,6 +206,11 @@ namespace Estacionamento
 
         private void CriarLayoutLimpo()
         {
+            // Ajustar controles criados pelo Designer para baixo para acomodar o MenuStrip
+            groupBoxDados.Location = new Point(20, 218);
+            btnGerarRelatorio.Location = new Point(520, 218);
+            btnExcluirFinalizado.Location = new Point(520, 298);
+
             // Dashboard no topo
             CriarDashboard();
             
@@ -252,7 +226,7 @@ namespace Estacionamento
             // Painel principal do dashboard
             panelDashboard = new Panel
             {
-                Location = new Point(20, 50),
+                Location = new Point(20, 78),
                 Size = new Size(1160, 130),
                 BackColor = Color.White,
                 BorderStyle = BorderStyle.FixedSingle
@@ -411,7 +385,7 @@ namespace Estacionamento
             // Painel de filtro simples
             var panelFiltro = new Panel
             {
-                Location = new Point(20, 395),
+                Location = new Point(20, 423),
                 Size = new Size(1160, 50),
                 BackColor = Color.White,
                 BorderStyle = BorderStyle.FixedSingle
@@ -523,7 +497,7 @@ namespace Estacionamento
             panelGraficos = new Panel
             {
                 // Alinha depois da coluna de botões (x=360 + 140 largura + 20 espaço = 520; outra coluna 150 -> 670; +20 = 690)
-                Location = new Point(690, 170),
+                Location = new Point(690, 198),
                 // Altura menor para caber filtro abaixo
                 Size = new Size(490, 110),
                 BackColor = Color.White,
@@ -599,8 +573,8 @@ namespace Estacionamento
         private void AjustarDataGridView()
         {
             // Ajustar posição e tamanho do DataGridView (abaixo do filtro)
-            dgvVeiculos.Location = new Point(20, 455);
-            dgvVeiculos.Size = new Size(1160, 185);
+            dgvVeiculos.Location = new Point(20, 483);
+            dgvVeiculos.Size = new Size(1160, 175);
             dgvVeiculos.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             dgvVeiculos.BackColor = Color.White;
             dgvVeiculos.BorderStyle = BorderStyle.FixedSingle;
@@ -1279,6 +1253,152 @@ namespace Estacionamento
             }
 
             base.OnFormClosed(e);
+        }
+
+        protected override void OnLayout(LayoutEventArgs levent)
+        {
+            base.OnLayout(levent);
+            if (lblUsuarioLogado != null && lblTitulo != null)
+            {
+                lblUsuarioLogado.Top = lblTitulo.Top + (lblTitulo.Height - lblUsuarioLogado.Height) / 2;
+                lblUsuarioLogado.Left = ClientSize.Width - lblUsuarioLogado.Width - 20;
+            }
+        }
+
+        private void CriarMenuSuperior()
+        {
+            menuStripSuperior = new MenuStrip
+            {
+                BackColor = Color.FromArgb(52, 73, 94),
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
+                Dock = DockStyle.Top,
+                Padding = new Padding(6, 2, 0, 2)
+            };
+
+            // Customizar renderizador para visual moderno
+            menuStripSuperior.Renderer = new CustomRenderer();
+
+            // Menu Pátio
+            var menuPatio = new ToolStripMenuItem("Pátio 🚗");
+            var itemAtualizar = new ToolStripMenuItem("Atualizar Painel", null, (s, e) => {
+                AtualizarGrid();
+                AtualizarDashboard();
+                AtualizarGraficos();
+            });
+            menuPatio.DropDownItems.Add(itemAtualizar);
+
+            // Menu Cadastro
+            var menuCadastro = new ToolStripMenuItem("Cadastro 📝");
+            var itemMensalistas = new ToolStripMenuItem("Mensalistas", null, (s, e) => AbrirCadastroMensalistas());
+            var itemUsuarios = new ToolStripMenuItem("Usuários (Admin)", null, BtnUsuarios_Click);
+            menuCadastro.DropDownItems.Add(itemMensalistas);
+            menuCadastro.DropDownItems.Add(itemUsuarios);
+
+            // Menu Clientes
+            var menuClientes = new ToolStripMenuItem("Clientes 👥");
+            var itemGerenciarClientes = new ToolStripMenuItem("Visualizar Clientes", null, (s, e) => {
+                MessageBox.Show("Módulo de Clientes Gerais reservado para futuras implementações ou integrações de CRM.", "Clientes", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            });
+            menuClientes.DropDownItems.Add(itemGerenciarClientes);
+
+            // Menu Relatórios
+            var menuRelatorios = new ToolStripMenuItem("Relatórios 📊");
+            var itemRelatorioPatio = new ToolStripMenuItem("Relatório de Pátio", null, btnGerarRelatorio_Click);
+            var itemRelatorioMensalistas = new ToolStripMenuItem("Relatório de Mensalistas", null, (s, e) => GerarRelatorioMensalistas());
+            menuRelatorios.DropDownItems.Add(itemRelatorioPatio);
+            menuRelatorios.DropDownItems.Add(itemRelatorioMensalistas);
+
+            // Menu Outras
+            var menuOutras = new ToolStripMenuItem("Outras Funcionalidades ⚙️");
+            var itemBackup = new ToolStripMenuItem("Backup de Dados (Admin)", null, BtnBackup_Click);
+            var itemSobre = new ToolStripMenuItem("Sobre o Sistema", null, (s, e) => {
+                MessageBox.Show("ParkSystem v2.5\nSistema de Estacionamento WinForms + .NET 8\n\nDesenvolvido com foco em alta performance e segurança.", "Sobre", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            });
+            menuOutras.DropDownItems.Add(itemBackup);
+            menuOutras.DropDownItems.Add(itemSobre);
+
+            menuStripSuperior.Items.AddRange(new ToolStripItem[] {
+                menuPatio,
+                menuCadastro,
+                menuClientes,
+                menuRelatorios,
+                menuOutras
+            });
+
+            this.MainMenuStrip = menuStripSuperior;
+            this.Controls.Add(menuStripSuperior);
+        }
+
+        private void AbrirCadastroMensalistas()
+        {
+            using var form = new MensalistaForm(_mensalistaRepository, _log);
+            form.ShowDialog(this);
+        }
+
+        private void GerarRelatorioMensalistas()
+        {
+            try
+            {
+                var mensalistas = _mensalistaRepository.Listar();
+                if (mensalistas.Count == 0)
+                {
+                    MessageBox.Show("Nenhum mensalista cadastrado.");
+                    return;
+                }
+
+                using (var sfd = new SaveFileDialog())
+                {
+                    sfd.Filter = "Arquivos CSV|*.csv";
+                    sfd.Title = "Salvar Relatório de Mensalistas";
+                    sfd.FileName = "Relatorio_Mensalistas.csv";
+                    if (sfd.ShowDialog() == DialogResult.OK)
+                    {
+                        using (var writer = new System.IO.StreamWriter(sfd.FileName, false, System.Text.Encoding.UTF8))
+                        {
+                            writer.WriteLine("ID;Nome;CPF/CNPJ;Matricula;Chave;Grupo;Tabela;Valor;Ativo");
+                            foreach (var m in mensalistas)
+                            {
+                                writer.WriteLine($"{m.Id};{m.Nome};{m.CpfCnpj};{m.Matricula};{m.Chave};{m.Grupo};{m.TabelaPrecos};{m.Valor:F2};{(m.Ativo ? "SIM" : "NÃO")}");
+                            }
+                        }
+
+                        _log.Info($"Relatório de mensalistas exportado: {sfd.FileName}");
+                        MessageBox.Show("Relatório de mensalistas gerado com sucesso!", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _log.Error("Erro ao gerar relatório de mensalistas.", ex);
+                MessageBox.Show($"Erro ao gerar relatório: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+    }
+
+    internal sealed class CustomColorTable : ProfessionalColorTable
+    {
+        public override Color MenuItemSelected => Color.FromArgb(41, 128, 185);
+        public override Color MenuItemSelectedGradientBegin => Color.FromArgb(41, 128, 185);
+        public override Color MenuItemSelectedGradientEnd => Color.FromArgb(31, 97, 141);
+        public override Color MenuItemPressedGradientBegin => Color.FromArgb(31, 97, 141);
+        public override Color MenuItemPressedGradientEnd => Color.FromArgb(21, 67, 101);
+        public override Color ToolStripDropDownBackground => Color.FromArgb(52, 73, 94);
+        public override Color ImageMarginGradientBegin => Color.FromArgb(52, 73, 94);
+        public override Color ImageMarginGradientEnd => Color.FromArgb(52, 73, 94);
+        public override Color ImageMarginGradientMiddle => Color.FromArgb(52, 73, 94);
+        public override Color MenuBorder => Color.FromArgb(31, 97, 141);
+        public override Color MenuItemBorder => Color.FromArgb(41, 128, 185);
+    }
+
+    internal sealed class CustomRenderer : ToolStripProfessionalRenderer
+    {
+        public CustomRenderer() : base(new CustomColorTable()) { }
+
+        protected override void OnRenderItemText(ToolStripItemTextRenderEventArgs e)
+        {
+            e.TextColor = Color.White;
+            base.OnRenderItemText(e);
         }
     }
 }
