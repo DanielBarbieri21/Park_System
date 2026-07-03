@@ -12,6 +12,12 @@ namespace Estacionamento.UI
         public static readonly Color Success = Color.FromArgb(46, 204, 113);
         public static readonly Color Surface = Color.White;
 
+        // Aliases mantidos para compatibilidade com código existente
+        public static readonly Color SurfaceAlt    = Color.FromArgb(245, 246, 248);
+        public static readonly Color SurfaceBorder = Color.FromArgb(220, 225, 230);
+        public static readonly Color TextOnDark    = Color.FromArgb(52, 73, 94);
+        public static readonly Color Danger        = Color.FromArgb(231, 76, 60);
+
         public static Icon? LoadAppIcon()
         {
             var iconPath = Path.Combine(AppContext.BaseDirectory, "Resources", "app.ico");

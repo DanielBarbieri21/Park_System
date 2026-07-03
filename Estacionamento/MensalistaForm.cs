@@ -56,8 +56,8 @@ namespace Estacionamento
 
             Text = "Cadastro e edição de credenciados - Mensalista";
             StartPosition = FormStartPosition.CenterParent;
-            MinimumSize = new Size(820, 660);
-            Size = new Size(880, 720);
+            MinimumSize = new Size(700, 500);
+            Size = new Size(760, 560);
             BackColor = Color.FromArgb(248, 249, 250);
             Font = new Font("Segoe UI", 9F);
 
@@ -308,7 +308,7 @@ namespace Estacionamento
             };
 
             inputControl.Location = new Point(210, yPos);
-            inputControl.Size = new Size(350, 24);
+            inputControl.Size = new Size(300, 24);
 
             container.Controls.Add(lbl);
             container.Controls.Add(inputControl);
@@ -318,8 +318,8 @@ namespace Estacionamento
                 var lblSuffix = new Label
                 {
                     Text = suffixText,
-                    Location = new Point(565, yPos),
-                    Size = new Size(180, 24),
+                    Location = new Point(515, yPos),
+                    Size = new Size(160, 24),
                     TextAlign = ContentAlignment.MiddleLeft,
                     Font = new Font("Segoe UI", 9F, FontStyle.Italic),
                     ForeColor = Color.FromArgb(127, 140, 141)

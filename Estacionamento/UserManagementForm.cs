@@ -2,6 +2,7 @@ using Estacionamento.Abstractions;
 using Estacionamento.Models;
 using Estacionamento.Repositories;
 using Estacionamento.Security;
+using Estacionamento.UI;
 using Microsoft.Data.Sqlite;
 using System;
 using System.Drawing;

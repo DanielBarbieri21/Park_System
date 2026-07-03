@@ -211,6 +211,9 @@ namespace Estacionamento
             btnGerarRelatorio.Location = new Point(520, 218);
             btnExcluirFinalizado.Location = new Point(520, 298);
 
+            // Aplicar tema escuro no groupBox e seus filhos
+            AplicarTemaEscuroGroupBox();
+
             // Dashboard no topo
             CriarDashboard();
             
@@ -219,6 +222,13 @@ namespace Estacionamento
             
             // Ajustar DataGridView
             AjustarDataGridView();
+        }
+
+        private void AplicarTemaEscuroGroupBox()
+        {
+            // Sem aplicação de tema escuro — cores originais (herdadas do sistema)
+            groupBoxDados.BackColor = Color.FromArgb(248, 249, 250);
+            groupBoxDados.ForeColor = Color.FromArgb(52, 73, 94);
         }
 
         private void CriarDashboard()
@@ -293,6 +303,49 @@ namespace Estacionamento
 
             panel.Controls.Add(lblTitulo);
             panel.Controls.Add(lblValor);
+
+            // Adicionar interatividade (Proposta 1)
+            panel.Cursor = Cursors.Hand;
+            lblTitulo.Cursor = Cursors.Hand;
+            lblValor.Cursor = Cursors.Hand;
+
+            EventHandler clickHandler = (s, e) =>
+            {
+                if (titulo == "Faturamento")
+                {
+                    btnGerarRelatorio_Click(s!, e!);
+                }
+                else
+                {
+                    chkApenasAtivos.Checked = true;
+                    txtFiltroPlaca.Clear();
+                    
+                    if (titulo == "Total Veículos")
+                        cmbFiltroTipo.SelectedIndex = 0; // Todos
+                    else if (titulo == "Carros")
+                        cmbFiltroTipo.SelectedItem = nameof(TipoVeiculo.Carro);
+                    else if (titulo == "Motos")
+                        cmbFiltroTipo.SelectedItem = nameof(TipoVeiculo.Moto);
+                    else if (titulo == "Caminhões")
+                        cmbFiltroTipo.SelectedItem = nameof(TipoVeiculo.Caminhao);
+                        
+                    BtnFiltrar_Click(s!, e!);
+                }
+            };
+
+            EventHandler mouseEnterHandler = (s, e) => panel.BackColor = Color.FromArgb(240, 245, 250);
+            EventHandler mouseLeaveHandler = (s, e) => panel.BackColor = Color.White;
+
+            panel.Click += clickHandler;
+            lblTitulo.Click += clickHandler;
+            lblValor.Click += clickHandler;
+
+            panel.MouseEnter += mouseEnterHandler;
+            panel.MouseLeave += mouseLeaveHandler;
+            lblTitulo.MouseEnter += mouseEnterHandler;
+            lblTitulo.MouseLeave += mouseLeaveHandler;
+            lblValor.MouseEnter += mouseEnterHandler;
+            lblValor.MouseLeave += mouseLeaveHandler;
 
             // Armazenar referências para atualização
             switch (titulo)
@@ -577,6 +630,7 @@ namespace Estacionamento
             dgvVeiculos.Size = new Size(1160, 175);
             dgvVeiculos.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             dgvVeiculos.BackColor = Color.White;
+            dgvVeiculos.BackgroundColor = Color.White;
             dgvVeiculos.BorderStyle = BorderStyle.FixedSingle;
             dgvVeiculos.AllowUserToAddRows = false;
             dgvVeiculos.ReadOnly = true;
@@ -584,6 +638,7 @@ namespace Estacionamento
             dgvVeiculos.DataBindingComplete += DgvVeiculos_DataBindingComplete;
             dgvVeiculos.CellPainting += DgvVeiculos_CellPainting;
         }
+
 
         private void AtualizarLayoutGraficos()
         {
@@ -1297,9 +1352,7 @@ namespace Estacionamento
 
             // Menu Clientes
             var menuClientes = new ToolStripMenuItem("Clientes 👥");
-            var itemGerenciarClientes = new ToolStripMenuItem("Visualizar Clientes", null, (s, e) => {
-                MessageBox.Show("Módulo de Clientes Gerais reservado para futuras implementações ou integrações de CRM.", "Clientes", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            });
+            var itemGerenciarClientes = new ToolStripMenuItem("Visualizar Clientes (Mensalistas)", null, (s, e) => AbrirCadastroMensalistas());
             menuClientes.DropDownItems.Add(itemGerenciarClientes);
 
             // Menu Relatórios
